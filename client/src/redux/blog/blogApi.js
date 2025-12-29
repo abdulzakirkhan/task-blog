@@ -46,6 +46,17 @@ export const blogModuleApi = api.injectEndpoints({
       },
       invalidatesTags: ["GetAllBlogs"],
     }),
+    updateBlog: builder.mutation({
+      query: (body) => {
+        const id=body?.id;
+        return {
+          url: `posts/${id}`,
+          method: "PUT",
+          body
+        };
+      },
+      invalidatesTags: ["GetAllBlogs"],
+    }),
 
     
     // Add more auth endpoints as needed
@@ -56,5 +67,6 @@ export const {
     useGetAllBlogsQuery,
     useCreateNewPostMutation,
     useDeleteBlogMutation,
-    useGetBlogByIdQuery
+    useGetBlogByIdQuery,
+    useUpdateBlogMutation
 } = blogModuleApi;

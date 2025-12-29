@@ -5,7 +5,8 @@ import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
 import { toast, Toaster } from "react-hot-toast";
-import { useCreateNewPostMutation, useGetAllBlogsQuery } from "../redux/blog/blogApi";
+import { useCreateNewPostMutation, useGetAllBlogsQuery, useUpdateBlogMutation } from "../redux/blog/blogApi";
+import Loader from "../components/Loader";
 
 // Toolbar component for rich text editor
 const EditorToolbar = ({ editor }) => {
@@ -112,6 +113,7 @@ export default function CreatePost() {
   const [title, setTitle] = useState(selectedBlog ? selectedBlog?.title :"")
   // mutation
   const [createNewPost, { isLoading }] = useCreateNewPostMutation();
+  const [updateBlog, { isLoading :updateBlogIsLoading }] = useUpdateBlogMutation();
   // Content editor configuration
   const editor = useEditor({
     extensions: [
@@ -135,7 +137,7 @@ export default function CreatePost() {
   // Character limit
   const MAX_CHARS = 10000;
   const TITLE_MAX_CHARS = 150;
-
+  const selectedBlogId=selectedBlog?._id
   // Handle form submission
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -190,6 +192,59 @@ export default function CreatePost() {
       console.log("object")
     }
   }, [title, editor, charCount, navigate]);
+  const handleUpdate = useCallback(async (e) => {
+    e.preventDefault();
+    
+    if (!editor) {
+      toast.error("Editor is not ready");
+      return;
+    }
+
+    const trimmedTitle = title.trim();
+    const content = editor.getHTML();
+
+    // Validation
+    if (!trimmedTitle) {
+      toast.error("Please enter a title");
+      return;
+    }
+
+    if (trimmedTitle.length < 5) {
+      toast.error("Title should be at least 5 characters");
+      return;
+    }
+
+    if (trimmedTitle.length > TITLE_MAX_CHARS) {
+      toast.error(`Title cannot exceed ${TITLE_MAX_CHARS} characters`);
+      return;
+    }
+
+    if (!content || content === "<p></p>" || editor.getText().trim().length === 0) {
+      toast.error("Please enter some content");
+      editor.commands.focus();
+      return;
+    }
+
+    if (charCount > MAX_CHARS) {
+      toast.error(`Content exceeds ${MAX_CHARS} characters limit`);
+      return;
+    }
+
+    try {
+
+      const result= await updateBlog({title,content,id:selectedBlogId})
+
+      if(result?.data){
+        toast.success("Post published successfully!")
+      }
+      setTimeout(() => navigate("/"), 1500);
+    } catch (error) {
+      console.error("Error saving post:", error);
+      toast.error("Failed to publish post. Please try again.");
+    } finally {
+      console.log("object")
+    }
+  }, [title, editor, charCount, navigate]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -220,6 +275,11 @@ export default function CreatePost() {
     setTitle(selectedBlog.title || "");
   }
 }, [editor, selectedBlog]);
+
+
+if(isLoading || updateBlogIsLoading || getAllBlogsLoading){
+  return <Loader />
+}
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex justify-center py-8 px-4">
       <Toaster 
@@ -243,7 +303,7 @@ export default function CreatePost() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={selectedBlog ? handleUpdate : handleSubmit} className="space-y-6">
           
           {/* Title Field - Simple Input */}
           <div>

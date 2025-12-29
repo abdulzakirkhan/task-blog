@@ -26,6 +26,7 @@ export default function Login() {
       } else {
         toast.success("Login successful!");
         dispatch(setCredentials(result))
+        navigate("/")
       }
     } catch (err) {
       console.error("Login failed:", err);

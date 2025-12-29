@@ -5,6 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { logOut } from "../redux/auth/authSlice";
 import { api } from "../redux/service";
+import Loader from "../components/Loader";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -46,7 +47,6 @@ export default function Home() {
   }
 
 
-  console.log("user :",user)
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
@@ -95,6 +95,8 @@ export default function Home() {
         <h2 className="text-2xl font-semibold text-gray-800 mb-6">Recent Posts</h2>
         <div className="space-y-4">
 
+          {isLoading && <Loader />}
+          {blogs?.length === 0 && <p className="text-2xl mt-12 text-center">No Posts</p>}
           {blogs?.map((blog) => {
               // Check if current user is the author of this blog
               const isAuthor = userId && blog.authorId?._id === userId;
@@ -243,6 +245,8 @@ export default function Home() {
             })}
         </div>
       </main>
+
+      {/* Modal  */}
       {showDeleteModal && (
         <div className="fixed inset-0.5 flex items-center justify-center z-50 backdrop-blur-sm bg-white/30">
           <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
