@@ -3,6 +3,7 @@ import { Toaster } from "react-hot-toast";
 import Home from "./pages/Home";
 
 import React from "react";
+import Login from "./pages/Login";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
         
       </Routes>
       <Toaster position="top-right" reverseOrder={false} />
