@@ -1,37 +1,66 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaRegEye } from "react-icons/fa";
-import { FaRegEyeSlash } from "react-icons/fa";
+import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import { useSignUpMutation } from "../redux/auth/authApi";
+
 export default function Register() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [isShow,setIsShow] = useState(false)
-  const [isShowConfirm,setIsShowConfirm] = useState(false)
   const navigate = useNavigate();
+  const [isShow, setIsShow] = useState(false);
+  const [isShowConfirm, setIsShowConfirm] = useState(false);
 
-  // mutaion
-  const [signUp, { isLoading, error }] = useSignUpMutation();
-  const handleSubmit =async (e) => {
-    e.preventDefault();
-    const payload ={name,email,password}
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return;
-    }
-    const result = await signUp(payload).unwrap()
+  // mutation
+  const [signUp, { isLoading }] = useSignUpMutation();
 
-    console.log("result :",result)
+  // ✅ Yup Validation Schema
+  const validationSchema = Yup.object({
+    name: Yup.string()
+      .min(3, "Name must be at least 3 characters")
+      .required("Name is required"),
 
-    if(result?.token || result?.user){
-      toast.success("Sign Up succesfully !")
-      navigate("/login")
-    }
+    email: Yup.string()
+      .email("Invalid email address")
+      .required("Email is required"),
 
-  };
+    password: Yup.string()
+      .min(6, "Password must be at least 6 characters")
+      .required("Password is required"),
+
+    confirmPassword: Yup.string()
+      .oneOf([Yup.ref("password")], "Passwords do not match")
+      .required("Confirm password is required"),
+  });
+
+  // ✅ Formik
+  const formik = useFormik({
+    initialValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        const payload = {
+          name: values.name,
+          email: values.email,
+          password: values.password,
+        };
+
+        const result = await signUp(payload).unwrap();
+
+        if (result?.token || result?.user) {
+          toast.success("Sign Up successfully!");
+          navigate("/login");
+        }
+      } catch (err) {
+        toast.error(err?.data?.message || "Signup failed");
+      }
+    },
+  });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -39,88 +68,118 @@ export default function Register() {
         <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
           Create an Account
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-5">
+
+        <form onSubmit={formik.handleSubmit} className="space-y-5">
+          {/* Name */}
           <div>
             <label className="block text-gray-700 mb-1">Name</label>
             <input
               type="text"
+              name="name"
               placeholder="Enter your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={formik.values.name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
+            {formik.touched.name && formik.errors.name && (
+              <p className="text-red-500 text-sm mt-1">{formik.errors.name}</p>
+            )}
           </div>
+
+          {/* Email */}
           <div>
             <label className="block text-gray-700 mb-1">Email</label>
             <input
               type="email"
+              name="email"
               placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              value={formik.values.email}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             />
+            {formik.touched.email && formik.errors.email && (
+              <p className="text-red-500 text-sm mt-1">{formik.errors.email}</p>
+            )}
           </div>
+
+          {/* Password */}
           <div>
             <label className="block text-gray-700 mb-1">Password</label>
             <div className="relative">
               <input
                 type={isShow ? "text" : "password"}
+                name="password"
                 placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formik.values.password}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               {isShow ? (
                 <FaRegEyeSlash
-                  className="absolute top-3 right-3 text-lg cursor-pointer"
+                  className="absolute top-3 right-3 cursor-pointer"
                   onClick={() => setIsShow(false)}
                 />
               ) : (
                 <FaRegEye
-                  className="absolute top-3 right-3 text-lg cursor-pointer"
+                  className="absolute top-3 right-3 cursor-pointer"
                   onClick={() => setIsShow(true)}
                 />
               )}
-
-              
-              
             </div>
+            {formik.touched.password && formik.errors.password && (
+              <p className="text-red-500 text-sm mt-1">
+                {formik.errors.password}
+              </p>
+            )}
           </div>
+
+          {/* Confirm Password */}
           <div>
-            <label className="block text-gray-700 mb-1">Confirm Password</label>
+            <label className="block text-gray-700 mb-1">
+              Confirm Password
+            </label>
             <div className="relative">
               <input
                 type={isShowConfirm ? "text" : "password"}
+                name="confirmPassword"
                 placeholder="Confirm your password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                value={formik.values.confirmPassword}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
               />
               {isShowConfirm ? (
                 <FaRegEyeSlash
-                  className="absolute top-3 right-3 text-lg cursor-pointer"
+                  className="absolute top-3 right-3 cursor-pointer"
                   onClick={() => setIsShowConfirm(false)}
                 />
               ) : (
                 <FaRegEye
-                  className="absolute top-3 right-3 text-lg cursor-pointer"
+                  className="absolute top-3 right-3 cursor-pointer"
                   onClick={() => setIsShowConfirm(true)}
                 />
               )}
             </div>
+            {formik.touched.confirmPassword &&
+              formik.errors.confirmPassword && (
+                <p className="text-red-500 text-sm mt-1">
+                  {formik.errors.confirmPassword}
+                </p>
+              )}
           </div>
-          {/* {error && <p className="text-red-500 text-sm">{error}</p>} */}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition duration-300"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
           >
-            Register
+            {isLoading ? "Registering..." : "Register"}
           </button>
         </form>
+
         <p className="mt-4 text-gray-500 text-center text-sm">
           Already have an account?{" "}
           <span
