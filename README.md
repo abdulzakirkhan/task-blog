@@ -65,6 +65,12 @@ This project supports **user authentication**, **CRUD operations for blog posts*
 - JWT Authentication
 - bcryptjs
 
+
+Add ENV to Backend
+PORT = 5000
+DB_URI = "mongodb+srv://amitprj737:amit123@chat-app.xmmu4yf.mongodb.net/?retryWrites=true&w=majority&appName=chat-app"
+JWT_SECRET = "qwertyuiopasdfghjklzxcvbnm1234567890@"
+JWT_EXPIRE=30m
 ---
 
 
