@@ -105,5 +105,3 @@ API Testing
 APIs tested using Postman
 
 Local APIs exposed using ngrok for sharing
-
-
